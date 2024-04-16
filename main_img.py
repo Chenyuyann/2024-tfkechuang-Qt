@@ -53,10 +53,6 @@ class MyMainWindow(QtWidgets.QWidget):
         self.image_list = ['img/2.jpg', 'img/3.jpg']
         self.current_img = 0
 
-        # self.scene_img = QGraphicsScene()
-        # self.pixmap_item = QGraphicsPixmapItem()
-        # self.ui.graphicsView_2.setScene(self.scene_img)
-        # self.scene_img.addItem(self.pixmap_item)
         self.scene_img = QGraphicsScene()
         self.pixmap_item = None
         self.ui.graphicsView_2.setScene(self.scene_img)
@@ -64,7 +60,7 @@ class MyMainWindow(QtWidgets.QWidget):
         self.ui.startButton.clicked.connect(self.start_image)
         self.ui.stopButton.clicked.connect(self.stop_image)
 
-        # self.ui.resetButton.clicked.connect(self.reset)
+        self.ui.resetButton.clicked.connect(self.reset)
 
     def resize_event(self, event):
         width = self.ui.graphicsView.width()
@@ -124,7 +120,6 @@ class MyMainWindow(QtWidgets.QWidget):
 
     def update_img(self):
         pixmap = QPixmap(self.image_list[self.current_img])
-        # self.pixmap_item.setPixmap(pixmap)
         if self.pixmap_item is None:
             self.pixmap_item = QGraphicsPixmapItem(pixmap)
             self.scene_img.addItem(self.pixmap_item)
@@ -143,16 +138,21 @@ class MyMainWindow(QtWidgets.QWidget):
         if self.img_flag:
             self.update_img()
 
-    # def reset(self):
-    #     self.timer.stop()
-    #     if self.canvas is not None:
-    #         self.scene.clear()
-    #         self.ui.graphicsView.setScene(None)  # 清空场景
-    #         self.canvas = None
+    def reset(self):
+        self.timer.stop()
+        if self.canvas is not None:
+            self.axes.clear()
+            self.x_data = []
+            self.y_data = []
+            self.axes.set_xlim(0, 30)
+            self.axes.set_ylim(60, 100)
+            self.axes.set_xlabel('Time')
+            self.axes.set_ylabel('Heart Rate')
+            self.canvas.draw()
 
-    #     if self.pixmap_item is not None:
-    #         self.scene_img.removeItem(self.pixmap_item)
-    #         self.pixmap_item = None
+        if self.pixmap_item is not None:
+            self.scene_img.removeItem(self.pixmap_item)
+            self.pixmap_item = None
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
