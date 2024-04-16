@@ -13,12 +13,10 @@ class MyMainWindow(QtWidgets.QWidget):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        # 创建 Matplotlib 图形和画布
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
         self.axes = self.figure.add_subplot(111)
 
-        # 设置画布的大小策略为 Expanding，使其自适应父组件的大小
         size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         size_policy.setHorizontalStretch(0)
         size_policy.setVerticalStretch(0)
@@ -29,15 +27,12 @@ class MyMainWindow(QtWidgets.QWidget):
         self.ui.graphicsView.setScene(self.scene)
         self.scene.addWidget(self.canvas)
 
-        # 连接窗口大小变化事件
         self.ui.graphicsView.resizeEvent = self.resize_event
+        self.ui.graphicsView_2.resizeEvent = self.resize_event
 
         self.x_data = []
         self.y_data = []
-        self.axes.set_xlim(0, 30)
-        self.axes.set_ylim(60, 100)
-        self.axes.set_xlabel('Time')
-        self.axes.set_ylabel('Heart Rate')
+        self.make_plot()
 
         self.plotting = False
         self.scroll_index = 0
@@ -48,7 +43,6 @@ class MyMainWindow(QtWidgets.QWidget):
         self.ui.detectButton.clicked.connect(self.start_plot)
         self.ui.stopButton.clicked.connect(self.stop_plot)
 
-        # 图片
         self.img_flag = False
         self.image_list = ['img/2.jpg', 'img/3.jpg']
         self.current_img = 0
@@ -74,7 +68,21 @@ class MyMainWindow(QtWidgets.QWidget):
             new_height = width
 
         self.canvas.setGeometry(int((width - new_width) / 2), int((height - new_height) / 2), int(new_width), int(new_height))
+        
+        if self.pixmap_item is not None:
+            pixmap = self.pixmap_item.pixmap()
+            if not pixmap.isNull():
+                scaled_pixmap = pixmap.scaled(width, height, QtCore.Qt.KeepAspectRatio)
+                self.pixmap_item.setPixmap(scaled_pixmap)
+                self.ui.graphicsView_2.fitInView(self.pixmap_item, QtCore.Qt.KeepAspectRatio)
 
+    def make_plot(self):
+        self.axes.set_xlim(0, 30)
+        self.axes.set_ylim(60, 120)
+        self.axes.set_xlabel('Time')
+        self.axes.set_ylabel('Heart Rate')
+        self.canvas.draw()
+    
     def start_plot(self):
         self.plotting = True
         self.timer.start(1000)
@@ -91,11 +99,7 @@ class MyMainWindow(QtWidgets.QWidget):
         self.axes.clear()
         self.axes.plot(self.x_data, self.y_data, 'r-')
         self.axes.plot(self.x_data, self.y_data, 'ro')
-
-        self.axes.set_xlim(0, 30)
-        self.axes.set_ylim(60, 100)
-        self.axes.set_xlabel('Time')
-        self.axes.set_ylabel('Heart Rate')
+        self.make_plot()
 
         for i in range(len(self.x_data)):
             self.axes.text(i, self.y_data[i], '%d' % self.y_data[i], ha='center', va='bottom', fontsize=10)
@@ -123,14 +127,17 @@ class MyMainWindow(QtWidgets.QWidget):
         if self.pixmap_item is None:
             self.pixmap_item = QGraphicsPixmapItem(pixmap)
             self.scene_img.addItem(self.pixmap_item)
+            self.adjust_position()
         else:
             self.pixmap_item.setPixmap(pixmap)
+        self.adjust_position()
+        self.current_img = (self.current_img + 1) % len(self.image_list)
+
+    def adjust_position(self):
+        pixmap = self.pixmap_item.pixmap()
         self.ui.graphicsView_2.fitInView(self.pixmap_item, QtCore.Qt.KeepAspectRatio)
-        
         self.pixmap_item.setPos((self.ui.graphicsView_2.width() - pixmap.width()) / 2,
                                 (self.ui.graphicsView_2.height() - pixmap.height()) / 2)
-        
-        self.current_img = (self.current_img + 1) % len(self.image_list)
 
     def update(self):
         if self.plotting:
@@ -144,10 +151,7 @@ class MyMainWindow(QtWidgets.QWidget):
             self.axes.clear()
             self.x_data = []
             self.y_data = []
-            self.axes.set_xlim(0, 30)
-            self.axes.set_ylim(60, 100)
-            self.axes.set_xlabel('Time')
-            self.axes.set_ylabel('Heart Rate')
+            self.make_plot()
             self.canvas.draw()
 
         if self.pixmap_item is not None:
