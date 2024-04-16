@@ -29,6 +29,9 @@ class MyMainWindow(QtWidgets.QWidget):
         self.ui.graphicsView.setScene(self.scene)
         self.scene.addWidget(self.canvas)
 
+        # 连接窗口大小变化事件
+        self.ui.graphicsView.resizeEvent = self.resize_event
+
         self.x_data = []
         self.y_data = []
         self.axes.set_xlim(0, 30)
@@ -36,27 +39,45 @@ class MyMainWindow(QtWidgets.QWidget):
         self.axes.set_xlabel('Time')
         self.axes.set_ylabel('Heart Rate')
 
+        self.plotting = False
+        self.scroll_index = 0
+
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
 
         self.ui.detectButton.clicked.connect(self.start_plot)
         self.ui.stopButton.clicked.connect(self.stop_plot)
 
-        self.plotting = False
-        self.scroll_index = 0
-
         # 图片
         self.img_flag = False
         self.image_list = ['img/2.jpg', 'img/3.jpg']
         self.current_img = 0
 
+        # self.scene_img = QGraphicsScene()
+        # self.pixmap_item = QGraphicsPixmapItem()
+        # self.ui.graphicsView_2.setScene(self.scene_img)
+        # self.scene_img.addItem(self.pixmap_item)
         self.scene_img = QGraphicsScene()
-        self.pixmap_item = QGraphicsPixmapItem()
+        self.pixmap_item = None
         self.ui.graphicsView_2.setScene(self.scene_img)
-        self.scene_img.addItem(self.pixmap_item)
         
         self.ui.startButton.clicked.connect(self.start_image)
         self.ui.stopButton.clicked.connect(self.stop_image)
+
+        # self.ui.resetButton.clicked.connect(self.reset)
+
+    def resize_event(self, event):
+        width = self.ui.graphicsView.width()
+        height = self.ui.graphicsView.height()
+
+        if width > height:
+            new_width = height
+            new_height = height
+        else:
+            new_width = width
+            new_height = width
+
+        self.canvas.setGeometry(int((width - new_width) / 2), int((height - new_height) / 2), int(new_width), int(new_height))
 
     def start_plot(self):
         self.plotting = True
@@ -103,7 +124,12 @@ class MyMainWindow(QtWidgets.QWidget):
 
     def update_img(self):
         pixmap = QPixmap(self.image_list[self.current_img])
-        self.pixmap_item.setPixmap(pixmap)
+        # self.pixmap_item.setPixmap(pixmap)
+        if self.pixmap_item is None:
+            self.pixmap_item = QGraphicsPixmapItem(pixmap)
+            self.scene_img.addItem(self.pixmap_item)
+        else:
+            self.pixmap_item.setPixmap(pixmap)
         self.ui.graphicsView_2.fitInView(self.pixmap_item, QtCore.Qt.KeepAspectRatio)
         
         self.pixmap_item.setPos((self.ui.graphicsView_2.width() - pixmap.width()) / 2,
@@ -116,6 +142,17 @@ class MyMainWindow(QtWidgets.QWidget):
             self.update_plot()
         if self.img_flag:
             self.update_img()
+
+    # def reset(self):
+    #     self.timer.stop()
+    #     if self.canvas is not None:
+    #         self.scene.clear()
+    #         self.ui.graphicsView.setScene(None)  # 清空场景
+    #         self.canvas = None
+
+    #     if self.pixmap_item is not None:
+    #         self.scene_img.removeItem(self.pixmap_item)
+    #         self.pixmap_item = None
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
